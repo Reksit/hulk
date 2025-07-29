@@ -2,6 +2,7 @@ package com.example.hackathon.repository;
 
 import com.example.hackathon.model.Task;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
