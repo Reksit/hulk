@@ -12,7 +12,7 @@ import java.util.*;
 @Service
 public class AIService {
 
-    @Value("${google.ai.api.key:}")
+    @Value("${google.ai.api.key:#{null}}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -196,7 +196,7 @@ public class AIService {
     }
 
     private String callGeminiAPI(String prompt) throws Exception {
-        if (apiKey == null || apiKey.trim().isEmpty()) {
+        if (apiKey == null || apiKey.trim().isEmpty() || "#{null}".equals(apiKey)) {
             throw new RuntimeException("Google AI API key is not configured. Please set google.ai.api.key in application.properties");
         }
         
