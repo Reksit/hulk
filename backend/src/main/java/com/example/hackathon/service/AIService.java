@@ -12,7 +12,7 @@ import java.util.*;
 @Service
 public class AIService {
 
-    @Value("${google.ai.api.key}")
+    @Value("${google.ai.api.key:}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -196,6 +196,10 @@ public class AIService {
     }
 
     private String callGeminiAPI(String prompt) throws Exception {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw new RuntimeException("Google AI API key is not configured. Please set google.ai.api.key in application.properties");
+        }
+        
         // Updated to use the correct Gemini 2.0 Flash endpoint
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
         
