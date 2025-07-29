@@ -238,7 +238,6 @@ const TaskManagementSection: React.FC = () => {
     <div key={task.id} className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
       task.isOverdue && task.status !== 'COMPLETED' ? 'border-l-4 border-red-500' : ''
     } ${isRoadmapTask ? 'border-l-4 border-purple-500' : ''}`}>
-    }`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center mb-2">
