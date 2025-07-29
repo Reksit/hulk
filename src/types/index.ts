@@ -76,6 +76,8 @@ export interface Task {
   updatedAt: string;
   completedAt?: string;
   isOverdue: boolean;
+  taskType?: string;
+  roadmapData?: string;
 }
 
 export interface TaskStats {

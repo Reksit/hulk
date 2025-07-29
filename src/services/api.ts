@@ -48,6 +48,9 @@ export const chatAPI = {
   sendMessage: (messageData: any) => api.post('/chat/send', messageData),
   getMessages: (userId1: string, userId2: string) => 
     api.get(`/chat/messages/${userId1}/${userId2}`),
+  getConversations: (userId: string) => api.get(`/chat/conversations/${userId}`),
+  markAsRead: (conversationId: string, userId: string) => 
+    api.put(`/chat/conversations/${conversationId}/read?userId=${userId}`),
   findUser: (query: string) => api.get(`/users/search?q=${query}`),
 };
 
@@ -77,6 +80,9 @@ export const taskAPI = {
     api.put(`/tasks/${taskId}/status?studentId=${studentId}&status=${status}`),
   getStats: (studentId: string) => api.get(`/tasks/student/${studentId}/stats`),
   getOverdue: (studentId: string) => api.get(`/tasks/student/${studentId}/overdue`),
+  getUpcoming: (studentId: string) => api.get(`/tasks/student/${studentId}/upcoming`),
+  getRoadmaps: (studentId: string) => api.get(`/tasks/student/${studentId}/roadmaps`),
+  createRoadmapTask: (data: any) => api.post('/tasks/roadmap', data),
 };
 
 export default api;

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Target, Clock, Zap, BookOpen, Brain, Loader } from 'lucide-react';
-import { aiAPI } from '../../services/api';
+import { Target, Clock, Zap, BookOpen, Brain, Loader, Save, CheckCircle } from 'lucide-react';
+import { aiAPI, taskAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const AIRoadmapSection: React.FC = () => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     domain: '',
     timeframe: '',
@@ -13,6 +15,7 @@ const AIRoadmapSection: React.FC = () => {
   });
   const [roadmap, setRoadmap] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingTask, setSavingTask] = useState(false);
   const [showRoadmap, setShowRoadmap] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +51,27 @@ const AIRoadmapSection: React.FC = () => {
     }
   };
 
+  const saveRoadmapAsTask = async () => {
+    if (!user || roadmap.length === 0) return;
+    
+    setSavingTask(true);
+    try {
+      const taskData = {
+        studentId: user.id,
+        title: `Learning Roadmap: ${formData.domain}`,
+        domain: formData.domain,
+        timeframe: formData.timeframe,
+        roadmapSteps: roadmap,
+      };
+      
+      await taskAPI.createRoadmapTask(taskData);
+      toast.success('Roadmap saved to Task Management!');
+    } catch (error) {
+      toast.error('Failed to save roadmap as task');
+    } finally {
+      setSavingTask(false);
+    }
+  };
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -211,6 +235,26 @@ const AIRoadmapSection: React.FC = () => {
                   This AI-generated roadmap is customized for your {formData.difficulty.toLowerCase()} level 
                   and designed to help you master {formData.domain} within {formData.timeframe}.
                 </p>
+                
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={saveRoadmapAsTask}
+                    disabled={savingTask}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    {savingTask ? (
+                      <>
+                        <Loader className="animate-spin h-4 w-4 mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save as Task
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

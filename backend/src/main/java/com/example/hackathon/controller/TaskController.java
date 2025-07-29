@@ -130,4 +130,34 @@ public class TaskController {
         List<TaskResponse> tasks = taskService.getOverdueTasks(studentId);
         return ResponseEntity.ok(tasks);
     }
+
+    @GetMapping("/student/{studentId}/upcoming")
+    public ResponseEntity<List<TaskResponse>> getUpcomingTasks(@PathVariable String studentId) {
+        List<TaskResponse> tasks = taskService.getUpcomingTasks(studentId);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/student/{studentId}/roadmaps")
+    public ResponseEntity<List<TaskResponse>> getRoadmapTasks(@PathVariable String studentId) {
+        List<TaskResponse> tasks = taskService.getRoadmapTasks(studentId);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @PostMapping("/roadmap")
+    public ResponseEntity<?> createRoadmapTask(@RequestBody Map<String, Object> request) {
+        try {
+            String studentId = (String) request.get("studentId");
+            String title = (String) request.get("title");
+            String domain = (String) request.get("domain");
+            String timeframe = (String) request.get("timeframe");
+            @SuppressWarnings("unchecked")
+            List<String> roadmapSteps = (List<String>) request.get("roadmapSteps");
+            
+            TaskResponse task = taskService.createRoadmapTask(studentId, title, domain, timeframe, roadmapSteps);
+            return ResponseEntity.ok(task);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Failed to create roadmap task: " + e.getMessage()));
+        }
+    }
 }

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Search, User, MessageCircle, LogOut } from 'lucide-react';
+import { Send, Search, User, MessageCircle, LogOut, Bell } from 'lucide-react';
 import { chatAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatMessage, User as UserType } from '../../types';
 import toast from 'react-hot-toast';
 
-interface ChatUser extends UserType {
+interface ConversationData {
+  conversationId: string;
+  otherUser: UserType;
   lastMessage?: string;
-  lastMessageTime?: Date;
-  unreadCount?: number;
+  lastMessageTime?: string;
+  unreadCount: number;
 }
 
 const ChatSection: React.FC = () => {
@@ -18,7 +20,7 @@ const ChatSection: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserType[]>([]);
-  const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
+  const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -32,16 +34,22 @@ const ChatSection: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
-    loadChatUsers();
+    loadConversations();
+    
+    // Poll for new messages every 5 seconds
+    const interval = setInterval(() => {
+      loadConversations();
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const loadChatUsers = async () => {
+  const loadConversations = async () => {
     try {
-      // This would typically load users who have had conversations with the current user
-      // For now, we'll simulate this with an empty array
-      setChatUsers([]);
+      const response = await chatAPI.getConversations(user!.id);
+      setConversations(response.data);
     } catch (error) {
-      console.error('Failed to load chat users');
+      console.error('Failed to load conversations');
     }
   };
 
@@ -69,11 +77,14 @@ const ChatSection: React.FC = () => {
       const response = await chatAPI.getMessages(user!.id, targetUser.id);
       setMessages(response.data);
       
-      // Add to chat users if not already present
-      const existingUser = chatUsers.find(u => u.id === targetUser.id);
-      if (!existingUser) {
-        setChatUsers(prev => [targetUser, ...prev]);
+      // Mark conversation as read
+      const conversation = conversations.find(conv => conv.otherUser.id === targetUser.id);
+      if (conversation && conversation.unreadCount > 0) {
+        await chatAPI.markAsRead(conversation.conversationId, user!.id);
       }
+      
+      // Refresh conversations to update unread counts
+      loadConversations();
     } catch (error) {
       toast.error('Failed to load messages');
     }
@@ -102,15 +113,10 @@ const ChatSection: React.FC = () => {
       setMessages([...messages, newMsg]);
       setNewMessage('');
       
-      // Update chat users list
-      setChatUsers(prev => {
-        const updated = prev.filter(u => u.id !== selectedUser.id);
-        return [{
-          ...selectedUser,
-          lastMessage: newMessage.trim(),
-          lastMessageTime: new Date(),
-        }, ...updated];
-      });
+      // Refresh conversations to show the new message
+      setTimeout(() => {
+        loadConversations();
+      }, 500);
       
       toast.success('Message sent!');
     } catch (error) {
@@ -193,30 +199,37 @@ const ChatSection: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {chatUsers.length > 0 ? (
+            {conversations.length > 0 ? (
               <div className="space-y-1 p-2">
-                {chatUsers.map((chatUser) => (
+                {conversations.map((conversation) => (
                   <button
-                    key={chatUser.id}
-                    onClick={() => startChat(chatUser)}
+                    key={conversation.conversationId}
+                    onClick={() => startChat(conversation.otherUser)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
-                      selectedUser?.id === chatUser.id
+                      selectedUser?.id === conversation.otherUser.id
                         ? 'bg-blue-50 border-l-4 border-blue-500'
                         : 'hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-between">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                         <User className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{chatUser.username}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-900 truncate">{conversation.otherUser.username}</p>
+                          {conversation.unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-2">
+                              {conversation.unreadCount}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-600 truncate">
-                          {chatUser.lastMessage || `${chatUser.role} • Start a conversation`}
+                          {conversation.lastMessage || `${conversation.otherUser.role} • Start a conversation`}
                         </p>
-                        {chatUser.lastMessageTime && (
+                        {conversation.lastMessageTime && (
                           <p className="text-xs text-gray-400">
-                            {chatUser.lastMessageTime.toLocaleTimeString()}
+                            {new Date(conversation.lastMessageTime).toLocaleString()}
                           </p>
                         )}
                       </div>
@@ -247,6 +260,12 @@ const ChatSection: React.FC = () => {
                   <div>
                     <h3 className="font-medium text-gray-900">{selectedUser.username}</h3>
                     <p className="text-sm text-gray-600">{selectedUser.role}</p>
+                    {conversations.find(c => c.otherUser.id === selectedUser.id)?.unreadCount > 0 && (
+                      <div className="flex items-center text-xs text-blue-600 mt-1">
+                        <Bell className="w-3 h-3 mr-1" />
+                        New messages
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -20,6 +20,9 @@ public class Task {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
     private LocalDateTime completedAt;
+    private boolean reminderSent = false;
+    private String taskType = "REGULAR"; // REGULAR, ROADMAP
+    private String roadmapData; // JSON string for roadmap tasks
 
     public enum TaskStatus {
         PENDING, ONGOING, COMPLETED
@@ -80,4 +83,13 @@ public class Task {
 
     public LocalDateTime getCompletedAt() { return completedAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public boolean isReminderSent() { return reminderSent; }
+    public void setReminderSent(boolean reminderSent) { this.reminderSent = reminderSent; }
+
+    public String getTaskType() { return taskType; }
+    public void setTaskType(String taskType) { this.taskType = taskType; }
+
+    public String getRoadmapData() { return roadmapData; }
+    public void setRoadmapData(String roadmapData) { this.roadmapData = roadmapData; }
 }
